@@ -6,18 +6,15 @@ endif()
 set(examples_as_tests_sources)
 if(${ENABLE_EXAMPLES})
     set(examples_as_tests_sources    
-        #test/sionna-examples-test-suite.cc
-        examples/sionna-example.cc
+        examples/simple-sionna-example.cc
         )
 endif()    
 
 build_lib(
     LIBNAME sionna
-    SOURCE_FILES model/sionna_linker.cc
-                 model/sionna_handler.cc
+    SOURCE_FILES model/sionna_handler.cc
                  helper/sionna-helper.cc
-    HEADER_FILES model/sionna_linker.h
-                 model/sionna_handler.h
+    HEADER_FILES model/sionna_handler.h
                  helper/sionna-helper.h
     LIBRARIES_TO_LINK
 	             ${libcore}

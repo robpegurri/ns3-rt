@@ -36,6 +36,7 @@ double getPathGainFromSionna (Vector a_position, Vector b_position);
 double getPropagationDelayFromSionna (Vector a_position, Vector b_position);
 std::string getLOSStatusFromSionna (Vector a_position, Vector b_position);
 void LogProgress (int piece, std::string chunk);
+void sendKillMessage ();
 
 extern std::string sionna_server_ip;
 extern int sionna_port;

@@ -538,7 +538,7 @@ def main():
                 udp_socket.sendto(response.encode(), address)
 
         if message.startswith("kill_sionna"):
-            print("Killing Sionna")
+            print("Bye!")
             udp_socket.close()
             break
 

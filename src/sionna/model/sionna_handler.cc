@@ -271,6 +271,12 @@ getPropagationDelayFromSionna(Vector a_position, Vector b_position) {
   return 0.0;  // default return if response not processed
 }
 
+void
+sendKillMessage () {
+  std::string message_for_Sionna = "kill_sionna";
+  sendString2sionna_UDP(message_for_Sionna);
+}
+
 std::string
 getLOSStatusFromSionna(Vector a_position, Vector b_position) {
   bool got_response = false;
@@ -361,3 +367,4 @@ LogProgress(int piece, std::string chunk) {
     }
 }
 }
+
