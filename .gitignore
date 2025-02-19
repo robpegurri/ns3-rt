@@ -54,3 +54,5 @@ vcpkg/
 
 # Ignore local cache used by e.g. clangd
 .cache/
+src/sionna/scenarios/SionnaCircleScenario/.DS_Store
+src/sionna/sionna_log.csv

@@ -1,0 +1,4 @@
+set object 1 rect from 0,0 to 240,423
+set object 2 rect from 0,443 to 240,866
+set object 3 rect from 260,0 to 500,423
+set object 4 rect from 260,443 to 500,866
