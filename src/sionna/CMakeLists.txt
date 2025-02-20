@@ -12,9 +12,9 @@ endif()
 
 build_lib(
     LIBNAME sionna
-    SOURCE_FILES model/sionna_handler.cc
+    SOURCE_FILES model/sionna-connection-handler.cc
                  helper/sionna-helper.cc
-    HEADER_FILES model/sionna_handler.h
+    HEADER_FILES model/sionna-connection-handler.h
                  helper/sionna-helper.h
     LIBRARIES_TO_LINK
 	             ${libcore}

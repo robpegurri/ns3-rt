@@ -24,7 +24,7 @@
 #include "ns3/ptr.h"
 #include "ns3/random-variable-stream.h"
 // Include NVIDIA Sionna
-#include "ns3/sionna_handler.h"
+#include "ns3/sionna-connection-handler.h"
 #include "ns3/sionna-helper.h"
 #include "ns3/node.h"
 

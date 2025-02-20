@@ -123,8 +123,6 @@ ConstantSpeedPropagationDelayModel::GetDelay(Ptr<MobilityModel> a, Ptr<MobilityM
     Vector b_position = b->GetPosition();
     Vector a_velocity = a->GetVelocity();
     Vector b_velocity = b->GetVelocity();
-    double a_angle = atan2(a_velocity.y, a_velocity.x) * 180.0 / M_PI;
-    double b_angle = atan2(b_velocity.y, b_velocity.x) * 180.0 / M_PI;
 
     double distance = a->GetDistanceFrom(b);
 
@@ -146,8 +144,8 @@ ConstantSpeedPropagationDelayModel::GetDelay(Ptr<MobilityModel> a, Ptr<MobilityM
         std::string b_id = "obj" + std::to_string(nodeB->GetId() + 1);
 
         // 3 - Location Update to Sionna
-        updateLocationSionna(a_id, a_position, a_velocity, std::to_string(a_angle));
-        updateLocationSionna(b_id, b_position, b_velocity, std::to_string(b_angle));
+        updateLocationInSionna(a_id, a_position, a_velocity);
+        updateLocationInSionna(b_id, b_position, b_velocity);
 
         sionna_delay = getPropagationDelayFromSionna(a_position, b_position);
         sionna_delay_ms = sionna_delay * 1000;
@@ -160,7 +158,7 @@ ConstantSpeedPropagationDelayModel::GetDelay(Ptr<MobilityModel> a, Ptr<MobilityM
             }
 
             std::string log_delays = std::to_string(ns3_delay_ms) + "," + std::to_string(sionna_delay_ms);
-            LogProgress(0, log_delays);
+            logProgress(0, log_delays);
         }
     }
 

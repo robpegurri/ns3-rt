@@ -1,26 +1,27 @@
-#include "sionna_handler.h"
+#include "sionna-connection-handler.h"
 
 namespace ns3 {
 
-NS_LOG_COMPONENT_DEFINE ("");
+NS_LOG_COMPONENT_DEFINE ("SionnaConnectionHandler");
 
 std::string sionna_server_ip = "";
 int sionna_port = 8103;
 int sionna_socket;
 struct sockaddr_in sionna_addr = {};
 struct in_addr sionna_destIPaddr;
-
 bool is_socket_created = false;
-std::unordered_map<std::string, SionnaPosition> objectPositions;
 bool sionna_verbose = false;
 bool sionna_local_machine = false;
 
+std::unordered_map<std::string, SionnaPosition> objectPositions;
 std::vector<bool> sionna_los_status = {false, false, false};
 
-// For Local NVIDIA Sionna entities only
+// Connection Handling Functions
 void 
-connect_now_local_machine() {
-    printf("Establishing local connection to Sionna at localhost:%d ...\n", sionna_port);
+connectToSionnaLocally() {
+    std::cout << "Establishing local connection to Sionna at localhost:" << sionna_port << "..." << std::endl;
+    
+    // Create UDP socket
     sionna_socket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 
     sionna_addr.sin_family = AF_INET;
@@ -31,12 +32,14 @@ connect_now_local_machine() {
     sionna_addr.sin_port = htons(sionna_port);
     sionna_addr.sin_addr = sionna_destIPaddr;
     connect(sionna_socket, (struct sockaddr *)&(sionna_addr), sizeof(sionna_addr));
+
     is_socket_created = true;
+    printf("SUCCESS! ns-3 is now locally connected to Sionna\n");
 }
 
 void
-connect_now() {
-  std::cout << "Establishing remote connection to Sionna at " << sionna_server_ip << ":" << sionna_port << std::endl;
+connectToSionnaRemotely() {
+  std::cout << "Establishing remote connection to Sionna at " << sionna_server_ip << ":" << sionna_port << "..." << std::endl;
   
   // Create UDP socket
   sionna_socket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
@@ -70,12 +73,12 @@ connect_now() {
 
   // Set a timeout on the socket for receiving responses
   struct timeval tv;
-  tv.tv_sec = 120;  // 60-second timeout
+  tv.tv_sec = 120;  // 120-second timeout
   tv.tv_usec = 0;
   setsockopt(sionna_socket, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof(tv));
 
   is_socket_created = true;
-  printf("SUCCESS! ns-3 is now connected to Sionna\n");
+  printf("SUCCESS! ns-3 is now remotely connected to Sionna\n");
 }
 
 void
@@ -85,18 +88,19 @@ checkConnection ()
       printf("No socket connection to Sionna detected, establishing now... \n");
       if (sionna_local_machine)
         {
-          connect_now_local_machine();
+          connectToSionnaLocally();
         }
       else
         {
-          connect_now();
+          connectToSionnaRemotely();
         }
     }
 }
 
+// Basic Message Exchange Functions
 int
-sendString2sionna_UDP(const std::string& str) {
-  checkConnection();
+sendMessageToSionna(const std::string& str) {
+  checkConnection(); 
   int send_statusCode = send(sionna_socket, str.c_str(), str.length(), 0);
   if (send_statusCode == -1) {
       perror("Error while sending details to Sionna");
@@ -106,7 +110,7 @@ sendString2sionna_UDP(const std::string& str) {
 }
 
 std::string
-getFromSionna_UDP() {
+receiveMessageFromSionna() {
   checkConnection();
   char msg_buffer[100];
   int received_payload = recv(sionna_socket, msg_buffer, sizeof(msg_buffer), 0);
@@ -119,57 +123,50 @@ getFromSionna_UDP() {
     }
 }
 
-/*
+// Utilities
 void
-updateLocationSionna(std::string obj, std::string x, std::string y, std::string z, std::string angle) {
+updateLocationInSionna(std::string obj_id, Vector Position, Vector Velocity) {
   bool updated = false;
-  std::string confirmation = "UPDATED" + obj;
 
-  std::string message_for_Sionna = "map_update:" + obj + "," + x + "," + y + "," + z + "," + angle;
-  sendString2sionna_UDP(message_for_Sionna);
-  //std::cout << "LU: " << message_for_Sionna << std::endl;
-
-  while (!updated) {
-      std::string server_response = getFromSionna_UDP();
-
-      if (server_response == confirmation) {
-          objectPositions[obj] = {x, y, z, angle};
-          updated = true;
-        }
-    }
-}*/
-
-void
-updateLocationSionna(std::string obj_id, Vector Position, Vector Velocity, std::string angle) {
-  bool updated = false;
-  std::string confirmation = "UPDATED" + obj_id;
+  NS_LOG_DEBUG("A LOC_UPDATE Procedure was initiated for object " << obj_id);
+  
+  std::string expected_confirmation_message = "LOC_CONFIRM:" + obj_id;
 
   double x = Position.x;
   double y = Position.y;
   double z = Position.z;
+  
+  // FIXME: Setting object velocity in Sionna causes kernel crash! 
+  // Waiting for NVIDIA to fix this (Doppler calculation is temporarily disabled).
   double x_speed = Velocity.x;
   double y_speed = Velocity.y;
   double z_speed = Velocity.z;
+  
+  // Same for direction angle (heading), applying to objects causes kernel crash.
+  double angle = atan2(y_speed, x_speed) * 180.0 / M_PI;
 
-  std::string message_for_Sionna = "map_update:" + obj_id + "," + std::to_string(x) + "," + std::to_string(y) + "," + std::to_string(z) + "," + angle;
-  sendString2sionna_UDP(message_for_Sionna);
-  //std::cout << "LU: " << message_for_Sionna << std::endl;
+  std::string message_for_Sionna = "LOC_UPDATE:" + obj_id + "," + std::to_string(x) + "," + std::to_string(y) + "," + std::to_string(z) + "," + std::to_string(angle);
+  NS_LOG_DEBUG("Sending message to Sionna: " << message_for_Sionna << "...");
+  sendMessageToSionna(message_for_Sionna);
+  NS_LOG_DEBUG("Done! Waiting for reply...");
 
   while (!updated) {
-      std::string server_response = getFromSionna_UDP();
+      std::string server_response = receiveMessageFromSionna();
 
-      if (server_response == confirmation) {
-          objectPositions[obj_id] = {std::to_string(x), std::to_string(y), std::to_string(z), angle};
+      if (server_response == expected_confirmation_message) {
+          objectPositions[obj_id] = {std::to_string(x), std::to_string(y), std::to_string(z), std::to_string(angle)};
           updated = true;
+          NS_LOG_DEBUG("LOC_CONFIRM message successfully received from Sionna.");
         }
     }
 }
-
 
 double
 getPathGainFromSionna(Vector a_position, Vector b_position) {
   bool got_response = false;
   std::string found_obj_a_id, found_obj_b_id;
+
+  NS_LOG_DEBUG("A CALC_REQUEST_PATHGAIN Procedure was initiated for objects at positions (" << a_position.x << ", " << a_position.y << ") and (" << b_position.x << ", " << b_position.y << ")");
 
   for (const auto& [obj, position] : objectPositions) {
       if (a_position.x == 0 && a_position.y == 0 && a_position.z == 0) {
@@ -189,15 +186,16 @@ getPathGainFromSionna(Vector a_position, Vector b_position) {
         }
     }
 
-  std::string message_for_Sionna = "calc_request:" + found_obj_a_id + "," + found_obj_b_id;
-  sendString2sionna_UDP(message_for_Sionna);
-  // std::cout << message_for_Sionna << std::endl;
+  std::string message_for_Sionna = "CALC_REQUEST_PATHGAIN:" + found_obj_a_id + "," + found_obj_b_id;
+  NS_LOG_DEBUG("Sending message to Sionna: " << message_for_Sionna << "...");
+  sendMessageToSionna(message_for_Sionna);
+  NS_LOG_DEBUG("Done! Waiting for reply...");
 
   while (!got_response) {
-      std::string server_response = getFromSionna_UDP();
+      std::string server_response = receiveMessageFromSionna();
 
-      if (server_response.rfind("CALC_DONE:", 0) == 0) {
-          std::string value_str = server_response.substr(10);
+      if (server_response.rfind("CALC_DONE_PATHGAIN:", 0) == 0) {
+          std::string value_str = server_response.substr(19);
           try {
               double value = std::stof(value_str);
               if (found_obj_b_id != "0") {
@@ -206,16 +204,14 @@ getPathGainFromSionna(Vector a_position, Vector b_position) {
                       printf("tx_id: %s, rx_id: %s, ", found_obj_a_id.c_str(), found_obj_b_id.c_str());
                     }
 
-                  // To fix missing delays in nr-v2x
-                  //std::string log_delays = std::to_string(0) + "," + std::to_string(0);
-                  //LogProgress(0, log_delays);
-
                   std::string log_names = found_obj_a_id + "," + found_obj_b_id;
-                  LogProgress(1, log_names);
+                  logProgress(1, log_names);
+
+                  NS_LOG_DEBUG("CALC_DONE_PATHGAIN message successfully received from Sionna: got " << value);
                 }
               return value;
             } catch (const std::invalid_argument& e) {
-              std::cerr << "Invalid response format: " << server_response << std::endl;
+              std::cerr << "Invalid response format for: " << server_response << std::endl;
             } catch (const std::out_of_range& e) {
               std::cerr << "Value out of range: " << server_response << std::endl;
             }
@@ -230,6 +226,8 @@ getPropagationDelayFromSionna(Vector a_position, Vector b_position) {
   bool got_response = false;
   std::string found_obj_a_id, found_obj_b_id;
 
+  NS_LOG_DEBUG("A CALC_REQUEST_DELAY Procedure was initiated for objects at positions (" << a_position.x << ", " << a_position.y << ") and (" << b_position.x << ", " << b_position.y << ")");
+
   for (const auto& [obj, position] : objectPositions) {
       if (a_position.x == 0 && a_position.y == 0 && a_position.z == 0) {
           found_obj_a_id = std::to_string(0);
@@ -248,20 +246,22 @@ getPropagationDelayFromSionna(Vector a_position, Vector b_position) {
         }
     }
 
-  std::string message_for_Sionna = "get_delay:" + found_obj_a_id + "," + found_obj_b_id;
-  sendString2sionna_UDP(message_for_Sionna);
-  //std::cout << message_for_Sionna << std::endl;
+  std::string message_for_Sionna = "CALC_REQUEST_DELAY:" + found_obj_a_id + "," + found_obj_b_id;
+  NS_LOG_DEBUG("Sending message to Sionna: " << message_for_Sionna << "...");
+  sendMessageToSionna(message_for_Sionna);
+  NS_LOG_DEBUG("Done! Waiting for reply...");
 
   while (!got_response) {
-      std::string server_response = getFromSionna_UDP();
+      std::string server_response = receiveMessageFromSionna();
 
-      if (server_response.rfind("DELAY:", 0) == 0) {
-          std::string value_str = server_response.substr(6);
+      if (server_response.rfind("CALC_DONE_DELAY:", 0) == 0) {
+          std::string value_str = server_response.substr(16);
           try {
               double value = std::stof(value_str);
+              NS_LOG_DEBUG("CALC_DONE_DELAY message successfully received from Sionna: got " << value);
               return value;
             } catch (const std::invalid_argument& e) {
-              std::cerr << "Invalid response format: " << server_response << std::endl;
+              std::cerr << "Invalid response format for: " << server_response << std::endl;
             } catch (const std::out_of_range& e) {
               std::cerr << "Value out of range: " << server_response << std::endl;
             }
@@ -271,16 +271,12 @@ getPropagationDelayFromSionna(Vector a_position, Vector b_position) {
   return 0.0;  // default return if response not processed
 }
 
-void
-sendKillMessage () {
-  std::string message_for_Sionna = "kill_sionna";
-  sendString2sionna_UDP(message_for_Sionna);
-}
-
 std::string
 getLOSStatusFromSionna(Vector a_position, Vector b_position) {
   bool got_response = false;
   std::string found_obj_a_id, found_obj_b_id;
+
+  NS_LOG_DEBUG("A CALC_REQUEST_LOS Procedure was initiated for objects at positions (" << a_position.x << ", " << a_position.y << ") and (" << b_position.x << ", " << b_position.y << ")");
 
   for (const auto& [obj, position] : objectPositions) {
       if (a_position.x == 0 && a_position.y == 0 && a_position.z == 0) {
@@ -300,16 +296,18 @@ getLOSStatusFromSionna(Vector a_position, Vector b_position) {
         }
     }
 
-  std::string message_for_Sionna = "are_they_LOS:" + found_obj_a_id + "," + found_obj_b_id;
-  sendString2sionna_UDP(message_for_Sionna);
-  //std::cout << message_for_Sionna << std::endl;
+  std::string message_for_Sionna = "CALC_REQUEST_LOS:" + found_obj_a_id + "," + found_obj_b_id;
+  NS_LOG_DEBUG("Sending message to Sionna: " << message_for_Sionna << "...");
+  sendMessageToSionna(message_for_Sionna);
+  NS_LOG_DEBUG("Done! Waiting for reply...");
 
   while (!got_response) {
-      std::string server_response = getFromSionna_UDP();
+      std::string server_response = receiveMessageFromSionna();
 
-      if (server_response.rfind("LOS:", 0) == 0) {
-          std::string value_str = server_response.substr(4);
+      if (server_response.rfind("CALC_DONE_LOS:", 0) == 0) {
+          std::string value_str = server_response.substr(14);
           try {
+              NS_LOG_DEBUG("CALC_DONE_LOS message successfully received from Sionna: got " << value_str);
               return value_str;
             } catch (const std::invalid_argument& e) {
               std::cerr << "Invalid response format: " << server_response << std::endl;
@@ -322,16 +320,25 @@ getLOSStatusFromSionna(Vector a_position, Vector b_position) {
   return "Null";  // default return if response not processed
 }
 
+// Other
 void
-LogProgress(int piece, std::string chunk) {
+shutdownSionnaServer () {
+  std::string message_for_Sionna = "SHUTDOWN_SIONNA";
+  NS_LOG_DEBUG("Sending message to Sionna: " << message_for_Sionna << "...");
+  sendMessageToSionna(message_for_Sionna);
+  NS_LOG_DEBUG("Done! Sionna server should be shutting down now.");
+}
 
-  bool first_row_of_log = true;
+void
+logProgress(int piece, std::string chunk) {
+
+  //bool first_row_of_log = true;
   std::ofstream csv_file("src/sionna/sionna_log.csv", std::ios::out | std::ios::app);
 
   csv_file.seekp (0, std::ios::end);
   if (csv_file.tellp() == 0)
     {
-      csv_file << "delay_ns3_ms,sionna_delay_ms,tx_id,rx_id,pathloss_ns3,pathloss_sionna,LOS" << std::endl;
+      csv_file << "delay_ms_ns3,delay_ms_sionna,tx_id,rx_id,rxPower_ns3,rxPower_sionna,LOS" << std::endl;
     }
 
   // Piece 0 = delays

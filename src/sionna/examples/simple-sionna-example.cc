@@ -124,7 +124,7 @@ int main(int argc, char* argv[])
         }
     }
     
-    Simulator::Stop(Seconds(20.0));
+    Simulator::Stop(Seconds(2.0));
     lteHelper->EnablePhyTraces();
     lteHelper->EnableMacTraces();
     lteHelper->EnableRlcTraces();
@@ -133,7 +133,7 @@ int main(int argc, char* argv[])
     Simulator::Destroy();
 
     // Optionally, close Sionna on server
-    sionnaHelper.KillSionna();
+    sionnaHelper.ShutdownSionna();
 
     return 0;
 }

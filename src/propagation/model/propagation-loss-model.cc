@@ -84,8 +84,6 @@ PropagationLossModel::CalcRxPower(double txPowerDbm,
     Vector b_position = b->GetPosition();
     Vector a_velocity = a->GetVelocity();
     Vector b_velocity = b->GetVelocity();
-    double a_angle = atan2(a_velocity.y, a_velocity.x) * 180.0 / M_PI;
-    double b_angle = atan2(b_velocity.y, b_velocity.x) * 180.0 / M_PI;
 
     double power_ns3 = 0;
     double power_sionna = 0;
@@ -101,8 +99,8 @@ PropagationLossModel::CalcRxPower(double txPowerDbm,
         std::string b_id = "obj" + std::to_string(nodeB->GetId() + 1);
 
         // 3 - Location Update to Sionna
-        updateLocationSionna(a_id, a_position, a_velocity, std::to_string(a_angle));
-        updateLocationSionna(b_id, b_position, b_velocity, std::to_string(b_angle));
+        updateLocationInSionna(a_id, a_position, a_velocity);
+        updateLocationInSionna(b_id, b_position, b_velocity);
 
         // 4 - Get Path Gain from Sionna and calculate power
         double path_gain = getPathGainFromSionna(a_position, b_position);
@@ -120,13 +118,13 @@ PropagationLossModel::CalcRxPower(double txPowerDbm,
 
             if (sionna_verbose)
             {
-                std::cout << "ns3_pathgain: " << -(txPowerDbm - power_ns3)
-                          << ", sionna_pathgain: " << -(txPowerDbm - power_sionna)
+                std::cout << "rxPower_ns3_model: " << -(txPowerDbm - power_ns3)
+                          << ", rxPower_sionna: " << -(txPowerDbm - power_sionna)
                           << ", LOS: " << los << std::endl;
             }
             std::string log_pl =
                 std::to_string(power_ns3) + "," + std::to_string(power_sionna) + "," + los;
-            LogProgress(2, log_pl);
+            logProgress(2, log_pl);
         }
     }
 

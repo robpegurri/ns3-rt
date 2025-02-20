@@ -8,14 +8,14 @@ import os, subprocess, signal
 import argparse
 
 
-file_name = "scenarios/SionnaCircleScenario/scene.xml"
+file_name = "scenarios/SionnaExampleScenario/scene.xml"
 #local_machine = True
 #verbose = False
 
 def manage_location_message(message, sionna_structure):
     try:
         # Handle map_update message
-        data = message[len("map_update:"):]
+        data = message[len("LOC_UPDATE:"):]
         parts = data.split(",")
         car = int(parts[0].replace("obj", ""))
 
@@ -316,7 +316,7 @@ def get_path_loss(car1_id, car2_id, sionna_structure):
 
 def manage_path_loss_request(message, sionna_structure):
     try:
-        data = message[len("calc_request:"):]
+        data = message[len("CALC_REQUEST_PATHGAIN:"):]
         parts = data.split(",")
         car_a_str = parts[0].replace("obj", "")
         car_b_str = parts[1].replace("obj", "")
@@ -360,7 +360,7 @@ def get_delay(car1_id, car2_id, sionna_structure):
 
 def manage_delay_request(message, sionna_structure):
     try:
-        data = message[len("get_delay:"):]
+        data = message[len("CALC_REQUEST_DELAY:"):]
         parts = data.split(",")
         car_a_str = parts[0].replace("obj", "")
         car_b_str = parts[1].replace("obj", "")
@@ -384,7 +384,7 @@ def manage_delay_request(message, sionna_structure):
 
 def manage_los_request(message, sionna_structure):
     try:
-        data = message[len("are_they_LOS:"):]
+        data = message[len("CALC_REQUEST_LOS:"):]
         parts = data.split(",")
         car_a_str = parts[0].replace("obj", "")
         car_b_str = parts[1].replace("obj", "")
@@ -444,7 +444,7 @@ def configure_gpu(verbose=False):
 def main():
     # Argument parser setup
     parser = argparse.ArgumentParser(description='Sionna Server Script')
-    parser.add_argument('--filename', type=str, default='scenarios/SionnaCircleScenario/scene.xml',
+    parser.add_argument('--filename', type=str, default='scenarios/SionnaExampleScenario/scene.xml',
                         help='Path to the scenario file')
     parser.add_argument('--local-machine', action='store_true',
                         help='Flag to indicate if running on a local machine')
@@ -455,7 +455,6 @@ def main():
     local_machine = args.local_machine
     verbose = args.verbose
     frequency = args.frequency
-
 
     # Kill any process using the port
     kill_process_using_port(8103, verbose)
@@ -511,34 +510,32 @@ def main():
         payload, address = udp_socket.recvfrom(1024)
         message = payload.decode()
 
-        if message.startswith("map_update:"):
+        if message.startswith("LOC_UPDATE:"):
             updated_car = manage_location_message(message, sionna_structure)
             if updated_car is not None:
-                response = "UPDATEDobj" + str(updated_car)
+                response = "LOC_CONFIRM:" + "obj" + str(updated_car)
                 udp_socket.sendto(response.encode(), address)
 
-        if message.startswith("calc_request:"):
+        if message.startswith("CALC_REQUEST_PATHGAIN:"):
             pathloss = manage_path_loss_request(message, sionna_structure)
             if pathloss is not None:
-                # Use pathloss + txPower (dBm) for 80211p
-                # response = "CALC_DONE:" + str(pathloss + 23)
-                response = "CALC_DONE:" + str(pathloss)
+                response = "CALC_DONE_PATHGAIN:" + str(pathloss)
                 udp_socket.sendto(response.encode(), address)
 
-        if message.startswith("get_delay:"):
+        if message.startswith("CALC_REQUEST_DELAY:"):
             delay = manage_delay_request(message, sionna_structure)
             if delay is not None:
-                response = "DELAY:" + str(delay)
+                response = "CALC_DONE_DELAY:" + str(delay)
                 udp_socket.sendto(response.encode(), address)
 
-        if message.startswith("are_they_LOS:"):
+        if message.startswith("CALC_REQUEST_LOS:"):
             los = manage_los_request(message, sionna_structure)
             if los is not None:
-                response = "LOS:" + str(los)
+                response = "CALC_DONE_LOS:" + str(los)
                 udp_socket.sendto(response.encode(), address)
 
-        if message.startswith("kill_sionna"):
-            print("Bye!")
+        if message.startswith("SHUTDOWN_SIONNA"):
+            print("Got SHUTDOWN_SIONNA message. Bye!")
             udp_socket.close()
             break
 
