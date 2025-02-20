@@ -23,8 +23,8 @@ int main(int argc, char* argv[])
     double txPower = 0;  // dBm
     uint16_t earfcn = 100;  // EARFCN (2100 MHz)
     
-    bool sionna = true;
-    std::string server_ip = "127.0.0.1";
+    bool sionna = true; // Use Sionna
+    std::string server_ip = "127.0.0.1"; //localhost
     bool local_machine = true;
     bool verb = false;
 
@@ -43,10 +43,10 @@ int main(int argc, char* argv[])
 
     if (sionna)
     {
-        sionnaHelper.SetSionna(sionna);
-        sionnaHelper.SetServerIp(server_ip);
-        sionnaHelper.SetLocalMachine(local_machine);
-        sionnaHelper.SetVerbose(verb);
+        sionnaHelper.SetSionna(sionna); // Enable Sionna
+        sionnaHelper.SetServerIp(server_ip); // Set server IP (in this case, localhost)
+        sionnaHelper.SetLocalMachine(local_machine); // Set True if Sionna is running locally, as in this example
+        sionnaHelper.SetVerbose(verb); // Enable verbose logging
     }
 
     Ptr<LteHelper> lteHelper = CreateObject<LteHelper>();

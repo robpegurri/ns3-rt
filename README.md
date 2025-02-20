@@ -13,12 +13,11 @@ For details about this integration running in a possible application example, re
 - **Deterministic Wireless Channel Simulations** using the GPU-accelerated RT module in Sionna.
 - **Fully Customizable Scenario in Sionna** with the possibility of chosing object meshes, materials (more details about scenes [available here](https://nvlabs.github.io/sionna/api/rt.html)) and antennas.
 - **Seamless Mobility Syncronization** between ns-3 Nodes and their correspondent mesh in Sionna.
+- **Possibility to run Sionna and ns-3 on two different machines** for example with Sionna in a GPU-powered server farm to reduce computation times
 
 ## Installation
 
-ns-3 and Sionna are two separated entities able to communicate with each other via an UDP network socket.
-
-For this reason, the installation consists in two steps:
+ns-3 and Sionna are two separated entities able to communicate with each other via an UDP network socket. For this reason, the installation consists in two steps:
 
 ### 1. Installing ns3-rt
 
@@ -76,3 +75,41 @@ and run the following code in `python3` to check if Sionna was installed properl
  >>> import sionna
  >>> print(sionna.__version__)
 ```
+
+## Running the example
+
+To run the `simple-sionna-example` example, you first need to start Sionna (this example expects Sionna to run locally, see the next section to know how to run Sionna remotely).
+
+Run the Python example script `sionna_server_script.py` from the `/src/sionna` folder with the following command and options:
+
+```bash
+python3 'sionna_server_script.py' --local-machine --frequency=2.1e9 --path-to-xml-scenario=scenarios/SionnaExampleScenario/scene.xml
+```
+
+After Sionna has started, run the ns-3 simulation in parallel with:
+
+```bash
+./ns3 run simple-sionna-example
+```
+
+## Simulating with Sionna and ns-3 on separated machines
+
+ns3-sionna was created with the possibility to run Sionna both locally (on the same machine with ns-3) and remotely (in a server with). In your ns-3 script, you can enable this possibility with `SionnaHelper` this way:
+
+```cpp
+#include "ns3/sionna-helper.h"
+...
+SionnaHelper& sionnaHelper = SionnaHelper::GetInstance();
+sionnaHelper.SetLocalMachine(false);
+sionnaHelper.SetServerIp("YOUR-IP-ADDRESS-HERE");
+```
+
+While on Sionna side, just remove the `--local-machine` flag when running the Python script. The default port used by ns3-sionna is **UDP/8103**.
+
+## Notes on using a custom Sionna scene with ns3-rt
+
+ns3-rt links every Node to a specific object in Sionna (associated with a fully customizable mesh). If this mesh is not found in the scene, then Sionna would not know how to calculate any of the requested values by ns3-rt.
+
+In the given example, upon the reception of a *LOC_UPDATE* message from ns3-rt, `sionna_server_script.py` looks for the correspondent object mesh named **car_n**, where **n** is calculated as the ns-3 **Node ID + 1**. The TX and RX antennas are placed on top of the objects (cars, in this case).
+
+To fully understand how to create a custom scene for Sionna, please refer to the [official video tutorial by NVIDIA](https://www.youtube.com/watch?v=7xHLDxUaQ7chttps:/).

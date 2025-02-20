@@ -443,15 +443,15 @@ def configure_gpu(verbose=False):
 # Main function to manage initialization and variables
 def main():
     # Argument parser setup
-    parser = argparse.ArgumentParser(description='Sionna Server Script')
-    parser.add_argument('--filename', type=str, default='scenarios/SionnaExampleScenario/scene.xml',
-                        help='Path to the scenario file')
+    parser = argparse.ArgumentParser(description='ns3-rt - Sionna Server Script: use the following options to configure the server.')
+    parser.add_argument('--path-to-xml-scenario', type=str, default='scenarios/SionnaExampleScenario/scene.xml',
+                        help='Path to the .xml file of the scenario (see Sionna documentation for the creation of custom scenarios)')
     parser.add_argument('--local-machine', action='store_true',
-                        help='Flag to indicate if running on a local machine')
+                        help='Flag to indicate if Sionna and ns3-rt are running on the same machine (locally)')
     parser.add_argument('--verbose', action='store_true', help='Flag for verbose output')
-    parser.add_argument('--frequency', type=float, help='Frequency of the scene in Hz', default=5.89e9)
+    parser.add_argument('--frequency', type=float, help='Frequency of the simulation in Hz', default=5.89e9)
     args = parser.parse_args()
-    file_name = args.filename
+    file_name = args.path_to_xml_scenario
     local_machine = args.local_machine
     verbose = args.verbose
     frequency = args.frequency
@@ -473,7 +473,6 @@ def main():
     element_spacing = SPEED_OF_LIGHT / sionna_structure["scene"].frequency / 2
     sionna_structure["planar_array"] = PlanarArray(1, 1, element_spacing, element_spacing, "iso", "V")
 
-    # Antenna and ray tracing configuration
     sionna_structure["antenna_displacement"] = [0, 0, 1.5]
     sionna_structure["position_threshold"] = 3  # Position update threshold in meters
     sionna_structure["angle_threshold"] = 90  # Angle update threshold in degrees
