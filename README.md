@@ -113,3 +113,17 @@ ns3-rt links every Node to a specific object in Sionna (associated with a fully 
 In the given example, upon the reception of a *LOC_UPDATE* message from ns3-rt, `sionna_server_script.py` looks for the correspondent object mesh named **car_n**, where **n** is calculated as the ns-3 **Node ID + 1**. The TX and RX antennas are placed on top of the objects (cars, in this case).
 
 To fully understand how to create a custom scene for Sionna, please refer to the [official video tutorial by NVIDIA](https://www.youtube.com/watch?v=7xHLDxUaQ7chttps:/).
+
+## Acknowledgements
+If you want to acknowledge our work, please refer to the following pre-print:
+```
+@misc{pegurri2025digitalnetworktwinsintegrating,
+      title={Toward Digital Network Twins: Integrating Sionna RT in ns-3 for 6G Multi-RAT Networks Simulations}, 
+      author={Roberto Pegurri and Francesco Linsalata and Eugenio Moro and Jakob Hoydis and Umberto Spagnolini},
+      year={2025},
+      eprint={2501.00372},
+      archivePrefix={arXiv},
+      primaryClass={cs.NI},
+      url={https://arxiv.org/abs/2501.00372}, 
+}
+```
