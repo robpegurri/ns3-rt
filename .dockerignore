@@ -1,0 +1,9 @@
+cmake-cache/
+build/
+CMakeCache.txt
+venv/
+.vscode/
+.cache/ 
+doc/
+.git/
+.lock-ns3_linux_build

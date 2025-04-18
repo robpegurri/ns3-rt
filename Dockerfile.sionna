@@ -1,0 +1,32 @@
+# Start from Ubuntu 24.04
+FROM ubuntu:24.04
+
+# Install required dependencies and add the deadsnakes PPA for Python 3.10
+RUN apt update && apt install -y \
+    software-properties-common && \
+    add-apt-repository ppa:deadsnakes/ppa && \
+    apt update && apt install -y \
+    python3.10 \
+    python3.10-venv \
+    python3-pip \
+    llvm \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set working directory
+WORKDIR /sionna
+
+# Create a virtual environment
+RUN python3.10 -m venv venv
+
+# Activate the virtual environment and install required Python packages
+RUN . venv/bin/activate && \
+    pip install --upgrade pip && \
+#    pip install "numpy<2" tensorflow sionna
+    pip install sionna==0.19.2
+
+# Copy the Sionna server script into the container
+COPY src/sionna/sionna_server_script.py .
+
+# Default command to run the Sionna server script
+ENV PYTHONUNBUFFERED=1
+CMD ["/sionna/venv/bin/python", "sionna_server_script.py", "--local-machine", "--frequency=2.1e9", "--path-to-xml-scenario", "/sionna/scenarios/SionnaExampleScenario/scene.xml"]
