@@ -117,13 +117,17 @@ To fully understand how to create a custom scene for Sionna, please refer to the
 ## Acknowledgements
 If you want to acknowledge our work, please refer to the following pre-print:
 ```
-@misc{pegurri2025digitalnetworktwinsintegrating,
-      title={Toward Digital Network Twins: Integrating Sionna RT in ns-3 for 6G Multi-RAT Networks Simulations}, 
-      author={Roberto Pegurri and Francesco Linsalata and Eugenio Moro and Jakob Hoydis and Umberto Spagnolini},
-      year={2025},
-      eprint={2501.00372},
-      archivePrefix={arXiv},
-      primaryClass={cs.NI},
-      url={https://arxiv.org/abs/2501.00372}, 
+@INPROCEEDINGS{Pegu2505:Toward,
+AUTHOR="Roberto Pegurri and Francesco Linsalata and Eugenio Moro and Jakob Hoydis
+and Umberto Spagnolini",
+TITLE="Toward Digital Network Twins: Integrating Sionna {RT} in ns-3 for {6G}
+{Multi-RAT} Networks Simulations",
+BOOKTITLE="IEEE INFOCOM WKSHPS: Digital Twins over NextG Wireless Networks (DTWIN
+2025) (INFOCOM DTWIN 2025)",
+ADDRESS="London, United Kingdom (Great Britain)",
+PAGES="5.88",
+DAYS=18,
+MONTH=may,
+YEAR=2025
 }
 ```
