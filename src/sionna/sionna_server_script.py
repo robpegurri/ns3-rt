@@ -6,6 +6,7 @@ from sionna.rt import load_scene, PlanarArray, Transmitter, Receiver, Paths
 from sionna.constants import SPEED_OF_LIGHT
 import os, subprocess, signal
 import argparse
+from http.server import BaseHTTPRequestHandler, HTTPServer
 
 
 file_name = "scenarios/SionnaExampleScenario/scene.xml"
@@ -442,6 +443,7 @@ def configure_gpu(verbose=False):
 
 # Main function to manage initialization and variables
 def main():
+    print("Starting...")
     # Argument parser setup
     parser = argparse.ArgumentParser(description='ns3-rt - Sionna Server Script: use the following options to configure the server.')
     parser.add_argument('--path-to-xml-scenario', type=str, default='scenarios/SionnaExampleScenario/scene.xml',
@@ -503,6 +505,10 @@ def main():
     # manage_requests(udp_socket, rays_cache, ...)
 
     print(f"Simulation setup complete. Ready to process requests. Ray Tracing is working at {frequency / 1e9} GHz.")
+    print("Starting healthcheck server...")
+    server = HTTPServer(("0.0.0.0", 8103), HealthCheckHandler)
+    print("Health check server running on port 8103")
+    server.serve_forever()
 
     while True:
         # Receive data from the socket
@@ -538,6 +544,16 @@ def main():
             udp_socket.close()
             break
 
+class HealthCheckHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        if self.path == "/health":
+            # Add logic to determine if processing is complete
+            self.send_response(200)
+            self.end_headers()
+            self.wfile.write(b"OK")
+        else:
+            self.send_response(404)
+            self.end_headers()
 
 # Entry point
 if __name__ == "__main__":
