@@ -7,6 +7,7 @@ from sionna.constants import SPEED_OF_LIGHT
 import os, subprocess, signal
 import argparse
 from http.server import BaseHTTPRequestHandler, HTTPServer
+from threading import Thread
 
 
 file_name = "scenarios/SionnaExampleScenario/scene.xml"
@@ -490,6 +491,7 @@ def main():
     if local_machine:
         udp_socket.bind(("127.0.0.1", 8103))  # Local machine configuration
     else:
+        print("Binding to 0.0.0.0...")
         udp_socket.bind(("0.0.0.0", 8103))  # External server configuration
 
     # Databases for vehicle locations
@@ -505,10 +507,9 @@ def main():
     # manage_requests(udp_socket, rays_cache, ...)
 
     print(f"Simulation setup complete. Ready to process requests. Ray Tracing is working at {frequency / 1e9} GHz.")
-    print("Starting healthcheck server...")
-    server = HTTPServer(("0.0.0.0", 8103), HealthCheckHandler)
-    print("Health check server running on port 8103")
-    server.serve_forever()
+    # Start the server thread
+    health_check_thread = Thread(target=health_check_server, daemon=True)
+    health_check_thread.start()
 
     while True:
         # Receive data from the socket
@@ -554,6 +555,11 @@ class HealthCheckHandler(BaseHTTPRequestHandler):
         else:
             self.send_response(404)
             self.end_headers()
+
+def health_check_server():
+    server = HTTPServer(("0.0.0.0", 8102), HealthCheckHandler)
+    print("Health check server running on port 8102")
+    server.serve_forever()
 
 # Entry point
 if __name__ == "__main__":
