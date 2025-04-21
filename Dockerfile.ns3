@@ -1,5 +1,5 @@
-# Start from Ubuntu 24.04
-FROM ubuntu:24.04
+FROM ubuntu:24.04 AS base
+ENV DEBIAN_FRONTEND=noninteractive
 
 # Install required dependencies
 RUN apt update && apt install -y \
@@ -14,15 +14,19 @@ RUN apt update && apt install -y \
     python3-pip \
     && rm -rf /var/lib/apt/lists/*
 
-# Set working directory
+
+FROM base AS builder
 WORKDIR /ns3-rt
-
-# Copy the ns3-rt repository into the container
 COPY . .
-
-# Configure and build ns3
 RUN ./ns3 configure --disable-python --enable-examples && \
     ./ns3 build
 
-# Default command to run the example with the scene file from an environment variable
-CMD ["bash", "-c", "./ns3 run $NS3_EXAMPLE"]
+FROM builder
+ENV DEBIAN_FRONTEND=noninteractive
+WORKDIR /ns3-rt
+COPY . .
+COPY --from=builder /ns3-rt/build /ns3-rt/build
+COPY --from=builder /ns3-rt/cmake-cache /ns3-rt/cmake-cache
+
+RUN chmod +x run_ns3_docker.sh
+CMD ["bash", "./run_ns3_docker.sh"]

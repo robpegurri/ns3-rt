@@ -29,4 +29,4 @@ COPY src/sionna/sionna_server_script.py .
 
 # Default command to run the Sionna server script
 ENV PYTHONUNBUFFERED=1
-CMD ["/sionna/venv/bin/python", "sionna_server_script.py", "--local-machine", "--frequency=2.1e9", "--path-to-xml-scenario", "/sionna/scenarios/SionnaExampleScenario/scene.xml"]
+CMD ["/sionna/venv/bin/python", "sionna_server_script.py", "--frequency=2.1e9", "--path-to-xml-scenario", "/sionna/scenarios/SionnaExampleScenario/scene.xml"]

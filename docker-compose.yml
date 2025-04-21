@@ -1,3 +1,10 @@
+networks:
+  ns-rt-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 192.168.1.0/24
+
 services:
   sionna:
     build:
@@ -5,10 +12,12 @@ services:
       dockerfile: Dockerfile.sionna
     volumes:
       - ./src/sionna/scenarios/SionnaExampleScenario:/sionna/scenarios/SionnaExampleScenario
-    network_mode: host
+    networks:
+      ns-rt-network:
+        ipv4_address: 192.168.1.100
     container_name: sionna-container
     healthcheck:
-      test: ["CMD", "python3", "-c", "import http.client; conn = http.client.HTTPConnection('127.0.0.1', 8103); conn.request('GET', '/health'); res = conn.getresponse(); exit(0) if res.status == 200 else exit(1)"]
+      test: ["CMD", "python3", "-c", "import http.client; conn = http.client.HTTPConnection('127.0.0.1', 8102); conn.request('GET', '/health'); res = conn.getresponse(); exit(0) if res.status == 200 else exit(1)"]
       interval: 10s
       timeout: 100s
       retries: 10
@@ -22,6 +31,11 @@ services:
       sionna:
         condition: service_healthy
     environment:
-      - NS3_EXAMPLE="simple-sionna-example"
-    network_mode: host
+      - NS3_EXAMPLE=simple-sionna-example
+      - SIONNA_IP=192.168.1.100
+    volumes:
+      - ./src/sionna/examples:/ns3-rt/src/sionna/examples
+    networks:
+      ns-rt-network:
+        ipv4_address: 192.168.1.101
     container_name: ns3-container
