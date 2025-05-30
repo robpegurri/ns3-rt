@@ -125,7 +125,7 @@ receiveMessageFromSionna() {
 
 // Utilities
 void
-updateLocationInSionna(std::string obj_id, Vector Position, Vector Velocity) {
+updateLocationInSionna(std::string obj_id, Vector Position, double Angle, Vector Velocity) {
   bool updated = false;
 
   NS_LOG_DEBUG("A LOC_UPDATE Procedure was initiated for object " << obj_id);
@@ -145,7 +145,11 @@ updateLocationInSionna(std::string obj_id, Vector Position, Vector Velocity) {
   // Same for direction angle (heading), applying to objects causes kernel crash.
   double angle = atan2(y_speed, x_speed) * 180.0 / M_PI;
 
-  std::string message_for_Sionna = "LOC_UPDATE:" + obj_id + "," + std::to_string(x) + "," + std::to_string(y) + "," + std::to_string(z) + "," + std::to_string(angle);
+  std::string message_for_Sionna = "LOC_UPDATE:" + obj_id + "," + std::to_string(x) + "," + std::to_string(y) + "," + std::to_string(z) + "," 
+                                                 + std::to_string(Angle) + "," 
+                                                 + std::to_string(x_speed) + "," + std::to_string(y_speed) + "," + std::to_string(z_speed);
+  
+  
   NS_LOG_DEBUG("Sending message to Sionna: " << message_for_Sionna << "...");
   sendMessageToSionna(message_for_Sionna);
   NS_LOG_DEBUG("Done! Waiting for reply...");

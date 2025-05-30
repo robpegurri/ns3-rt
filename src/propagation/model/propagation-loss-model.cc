@@ -85,6 +85,9 @@ PropagationLossModel::CalcRxPower(double txPowerDbm,
     Vector a_velocity = a->GetVelocity();
     Vector b_velocity = b->GetVelocity();
 
+    double a_angle = atan2(a_velocity.y, a_velocity.x) * 180.0 / M_PI;
+    double b_angle = atan2(b_velocity.y, b_velocity.x) * 180.0 / M_PI;
+
     double power_ns3 = 0;
     double power_sionna = 0;
 
@@ -97,10 +100,10 @@ PropagationLossModel::CalcRxPower(double txPowerDbm,
         Ptr<Node> nodeB = b->GetObject<Node>();
         NS_ABORT_MSG_IF(!nodeB, "Error: Ptr<MobilityModel> b (usually RX) not linked to a Node. This is needed for Sionna to track the object location!");
         std::string b_id = "obj" + std::to_string(nodeB->GetId() + 1);
-
+        
         // 3 - Location Update to Sionna
-        updateLocationInSionna(a_id, a_position, a_velocity);
-        updateLocationInSionna(b_id, b_position, b_velocity);
+        updateLocationInSionna(a_id, a_position, a_angle, a_velocity);
+        updateLocationInSionna(b_id, b_position, b_angle, b_velocity);
 
         // 4 - Get Path Gain from Sionna and calculate power
         double path_gain = getPathGainFromSionna(a_position, b_position);

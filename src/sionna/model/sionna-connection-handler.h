@@ -34,7 +34,7 @@ int sendMessageToSionna (const std::string &str);
 std::string receiveMessageFromSionna ();
 
 // Utilities
-void updateLocationInSionna(std::string obj_id, Vector Position, Vector Velocity);
+void updateLocationInSionna(std::string obj_id, Vector Position, double Angle, Vector Velocity);
 double getPathGainFromSionna (Vector a_position, Vector b_position);
 double getPropagationDelayFromSionna (Vector a_position, Vector b_position);
 std::string getLOSStatusFromSionna (Vector a_position, Vector b_position);

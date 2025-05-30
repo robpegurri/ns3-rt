@@ -29,7 +29,6 @@
 #include <unordered_map>
 
 // Include NVIDIA Sionna
-#include "ns3/sionna-connection-handler.h"
 #include "ns3/sionna-helper.h"
 #include "ns3/node.h"
 
